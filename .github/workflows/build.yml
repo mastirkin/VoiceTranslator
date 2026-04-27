@@ -217,8 +217,9 @@ jobs:
           EOF
 
       - name: Make gradlew
-        run: gradle wrapper --gradle-version 8.4
-
+        run: |
+          gradle wrapper --gradle-version 8.4 --distribution-type bin
+          cat gradle/wrapper/gradle-wrapper.properties
       - name: Build APK
         run: ./gradlew assembleDebug
 
