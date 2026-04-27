@@ -33,6 +33,7 @@ jobs:
           apply plugin: 'com.android.application'
           apply plugin: 'kotlin-android'
           android {
+          namespace 'com.voicetranslator'
             compileSdkVersion 33
             defaultConfig {
               applicationId "com.voicetranslator"
