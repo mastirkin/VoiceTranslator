@@ -105,8 +105,8 @@ jobs:
                 override fun onResponse(call: Call, response: Response) {
                   val translated = JSONObject(response.body?.string() ?: return)
                     .getJSONObject("responseData").getString("translatedText")
-                  tts.speak(translated, TextToSpeech.QUEUE_FLUSH, null, null)
-                  android.os.Handler(mainLooper).postDelayed({ finish() }, 5000)
+                  tts.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() { override fun onStart(u: String?) {} override fun onDone(u: String?) { runOnUiThread { finish() } } override fun onError(u: String?) { runOnUiThread { finish() } } })
+                  tts.speak(translated, TextToSpeech.QUEUE_FLUSH, null, "done")
                 }
               })
             }
