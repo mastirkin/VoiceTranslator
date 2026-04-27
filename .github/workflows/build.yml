@@ -218,8 +218,10 @@ jobs:
 
       - name: Make gradlew
         run: |
-          gradle wrapper --gradle-version 8.4 --distribution-type bin
-          cat gradle/wrapper/gradle-wrapper.properties
+          curl -L https://services.gradle.org/distributions/gradle-8.4-bin.zip -o gradle.zip
+          unzip -q gradle.zip
+          ./gradle-8.4/bin/gradle wrapper
+          chmod +x gradlew
       - name: Build APK
         run: ./gradlew assembleDebug
 
