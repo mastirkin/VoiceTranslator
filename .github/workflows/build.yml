@@ -16,6 +16,7 @@ jobs:
           mkdir -p app/src/main/java/com/voicetranslator
           mkdir -p app/src/main/res/xml
           mkdir -p app/src/main/res/values
+          echo "android.useAndroidX=true" > gradle.properties
           cat > settings.gradle << 'SETTINGS'
           rootProject.name = "VoiceTranslator"
           include ':app'
