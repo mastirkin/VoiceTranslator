@@ -45,8 +45,8 @@ jobs:
               applicationId "com.voicetranslator"
               minSdkVersion 26
               targetSdkVersion 33
-              versionCode 10
-              versionName "10.0"
+              versionCode 11
+              versionName "11.0"
             }
           }
           repositories {
@@ -194,13 +194,18 @@ jobs:
               }
             }
             private fun cleanTranslation(raw: String): String {
-              return raw
-                .replace(Regex("\\s*\\d+%.*$", RegexOption.IGNORE_CASE), "")
-                .substringBefore("[")
-                .substringBefore("MYMEMORY")
-                .substringBefore("PLEASE")
-                .substringBefore("YOU USED")
-                .trim()
+              var result = raw
+              result = result.replace(Regex("\\s*\\d+[,.]?\\d*\\s*(million|billion|thousand|млн|тысяч|миллион).*$", RegexOption.IGNORE_CASE), "")
+              result = result.replace(Regex("\\s*\\d+%.*$", RegexOption.IGNORE_CASE), "")
+              result = result.replace(Regex("^[\\d\\s,\\.]+$"), "")
+              result = result.substringBefore("[")
+              result = result.substringBefore("MYMEMORY")
+              result = result.substringBefore("PLEASE")
+              result = result.substringBefore("YOU USED")
+              result = result.substringBefore("QUERY LENGTH")
+              result = result.substringBefore("THIS IS A DEMO")
+              result = result.replace(Regex("\\b\\d{5,}\\b"), "")
+              return result.trim()
             }
             private fun splitIntoChunks(text: String, chunkSize: Int = 480): List<String> {
               val chunks = mutableListOf<String>()
@@ -219,16 +224,24 @@ jobs:
               }
               return chunks.filter { it.isNotEmpty() }
             }
+            private fun speakChunks(chunks: List<String>, index: Int) {
+              if (index >= chunks.size) { stopSelf(); return }
+              val isLast = index == chunks.size - 1
+              tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(u: String?) {}
+                override fun onDone(u: String?) {
+                  if (isLast) { tts.stop(); stopSelf() }
+                  else speakChunks(chunks, index + 1)
+                }
+                override fun onError(u: String?) { tts.stop(); stopSelf() }
+              })
+              tts.speak(chunks[index], TextToSpeech.QUEUE_FLUSH, null, "chunk_$index")
+            }
             private fun translateChunks(chunks: List<String>, langpair: String, results: MutableList<String>, index: Int) {
               if (index >= chunks.size) {
-                val fullTranslation = results.joinToString(" ")
-                if (fullTranslation.isEmpty()) { stopSelf(); return }
-                tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                  override fun onStart(u: String?) {}
-                  override fun onDone(u: String?) { tts.stop(); stopSelf() }
-                  override fun onError(u: String?) { tts.stop(); stopSelf() }
-                })
-                tts.speak(fullTranslation, TextToSpeech.QUEUE_FLUSH, null, "done")
+                val translated = results.filter { it.isNotEmpty() }
+                if (translated.isEmpty()) { stopSelf(); return }
+                speakChunks(translated, 0)
                 return
               }
               val encoded = java.net.URLEncoder.encode(chunks[index], "UTF-8")
